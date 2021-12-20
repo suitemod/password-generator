@@ -1,22 +1,14 @@
-# pull official base image
-FROM node:13.12.0-alpine
-RUN yarn config set proxy http://10.152.203.53:3128
-RUN yarn config set https-proxy https://10.152.203.53:3128
+FROM busybox:latest
+RUN addgroup -g 10001 app && \
+    adduser -G app -u 10001 \
+    --home /app --shell /sbin/nologin \
+    --disabled-password app
 
+RUN mkdir /app/statics/
+ADD statics /app/statics/
 
-# set working directory
+COPY bin/invoicer /app/invoicer
+USER app
+EXPOSE 8080
 WORKDIR /app
-
-# add `/app/node_modules/.bin` to $PATH
-ENV PATH /app/node_modules/.bin:$PATH
-
-# install app dependencies
-COPY package.json ./
-COPY package-lock.json ./
-RUN yarn add .
-
-# add app
-COPY . ./
-
-# start app
-CMD ["npm", "start"]
+ENTRYPOINT /app/invoicer
